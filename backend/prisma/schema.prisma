@@ -1,0 +1,85 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Role {
+  roleName String @id @map("role_name") @db.VarChar(50)
+  users    User[]
+}
+
+model Document {
+  id       String  @id @default(uuid()) @map("document_id") @db.Uuid
+  document String  @db.Text
+  user     User?   @relation(fields: [userId], references: [id])
+  userId   String? @unique @map("user_id") @db.Uuid
+}
+
+model User {
+  id            String      @id @default(uuid()) @map("user_id") @db.Uuid
+  email         String      @unique
+  password      String
+  firstname     String?
+  lastname      String?
+  gender        String
+  phoneno       String      @map("phoneno")
+  phoneVerified Boolean     @default(false) @map("phone_verified")
+  companyName   String?     @map("company_name")
+  isVerified    Boolean     @default(false) @map("is_verified")
+  locality      String
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @default(now()) @map("updated_at")
+  roleName      String      @default("Admin") @map("role_name") @db.VarChar(50)
+  documentId    String?     @unique @map("document_id") @db.Uuid
+  Role          Role        @relation(fields: [roleName], references: [roleName])
+  Document      Document?   @relation
+  Billboards    Billboard[]
+  Bookings      Booking[]
+
+  @@index([locality], name: "users_location_idx")
+  @@map("users")
+}
+
+model Billboard {
+  id            String    @id @default(uuid()) @map("billboard_id") @db.Uuid
+  size          String
+  location      String
+  billboardType String    @map("billboard_type")
+  price         Float
+  available     Boolean   @default(true)
+  amenities     String?
+  bImg          String?   @map("b_img")
+  bReview       String?   @map("b_review")
+  bDescription  String?   @map("b_description")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @map("updated_at")
+  ownerId       String    @map("owner_id") @db.Uuid
+  owner         User      @relation(fields: [ownerId], references: [id])
+  bookings      Booking[]
+
+  @@index([price], name: "billboard_price_idx")
+  @@map("billboard")
+}
+
+model Booking {
+  id           String    @id @default(uuid()) @map("booking_id") @db.Uuid
+  billboardId  String    @map("billboard_id") @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  startDate    DateTime  @map("start_date")
+  endDate      DateTime  @map("end_date")
+  offeredPrice Float
+  status       String    @default("pending")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @map("updated_at")
+  billboard    Billboard @relation(fields: [billboardId], references: [id])
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@index([startDate, endDate], name: "booking_dates_idx")
+  @@map("booking")
+}

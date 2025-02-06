@@ -4,8 +4,7 @@ import LoginPage from "./pages/LoginPage.tsx";
                     import { Dashboard } from "./pages/Dashboard.tsx";
                     import ProtectedRoute from "./components/ProtectedRoute.tsx";
                     import { AuthProvider } from "./components/AuthContext.tsx";
-                    import { PostProperty } from "./pages/PostProperty.tsx";
-
+                    import ShowProperties from "./pages/ShowProperties.tsx"
                     function App() {
                         return (
                             <AuthProvider>
@@ -18,12 +17,12 @@ import LoginPage from "./pages/LoginPage.tsx";
                                             <Dashboard />
                                         </ProtectedRoute>
                                     } />
-                                    <Route path="/postproperty" element={
+
+                                    <Route path="/showproperties" element={
                                         <ProtectedRoute>
-                                            <PostProperty />
+                                            <ShowProperties />
                                         </ProtectedRoute>
                                     } />
-
                                 </Routes>
                             </AuthProvider>
                         );

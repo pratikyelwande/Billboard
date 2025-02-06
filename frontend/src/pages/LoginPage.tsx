@@ -11,33 +11,6 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const { login } = useAuth();
 
-    // const handleSubmit = async (e: any) => {
-    //     e.preventDefault();
-    //     setMessage('');
-    //
-    //     try {
-    //         const response = await axios.post(
-    //             `${import.meta.env.VITE_API_URL}/api/auth/login`,
-    //             { email, password },
-    //             { withCredentials: true }
-    //         );
-    //         const token = response.data.token; // Assuming the token is in the response
-    //         console.log(token);
-    //         login(token); // Store token in localStorage and set isAuthenticated to true
-    //
-    //         setMessage('Login successful.');
-    //         console.log("Login successful");
-    //         navigate('/dashboard'); // Redirect to Dashboard
-    //     } catch (error: any) {
-    //         if (error.response) {
-    //             setMessage(error.response.data.message || 'Login failed.');
-    //         } else if (error.request) {
-    //             setMessage('No response from server.');
-    //         } else {
-    //             setMessage('Error: ' + error.message);
-    //         }
-    //     }
-    // };
 const handleSubmit = async (e: any) => {
     e.preventDefault();
     setMessage('');

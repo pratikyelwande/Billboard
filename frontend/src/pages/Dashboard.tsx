@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, useRef, ChangeEvent, FormEvent} from 'react';
 import axios from 'axios';
+import {useNavigate} from "react-router-dom";
 
 interface BillboardFormData {
     size: string;
@@ -27,11 +28,13 @@ export const Dashboard = () => {
         bDescription: '',
     });
     const formRef = useRef<HTMLDivElement>(null);
-
+    const navigate = useNavigate();
     const handleClick = () => {
         setShowForm(!showForm);
     };
-
+   const handleClick1 = () => {
+       navigate("/showproperties");
+   };
     const handleClickOutside = (event: MouseEvent) => {
         if (formRef.current && !formRef.current.contains(event.target as Node)) {
             setShowForm(false);
@@ -171,7 +174,7 @@ export const Dashboard = () => {
                 >
                     Post Property
                 </button>
-                <button className="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition-colors">
+                <button className="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition-colors" onClick={handleClick1}>
                     View Properties
                 </button>
             </div>

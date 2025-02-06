@@ -122,3 +122,12 @@ export const createBillboard = async (req, res) => {
         return apiResponse.error(res, error.message, 500);
     }
 };
+
+export const getAllBillboards = async (req, res) => {
+    try {
+        const billboards = await prisma.billboard.findMany();
+        return apiResponse.success(res, billboards, 'Billboards retrieved successfully');
+    } catch (error) {
+        return apiResponse.error(res, error.message, 500);
+    }
+};

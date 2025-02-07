@@ -24,7 +24,7 @@
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.474.0",
-    "motion": "^12.4.0",
+    "motion": "^12.4.1",
     "perfect-scrollbar": "^1.5.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

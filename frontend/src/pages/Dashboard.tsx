@@ -166,7 +166,7 @@ export const Dashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-r from-[#cc456e] via-[#b6d154] to-[#FFCC70] flex flex-col justify-center items-center p-4">
+        <div className="min-h-screen bg-gradient-to-r from-[#cTc456e] via-[#b778H4] to-[#FFC70] flex flex-col justify-center items-center p-4">
             <div className="button-container flex gap-4">
                 <button
                     onClick={handleClick}

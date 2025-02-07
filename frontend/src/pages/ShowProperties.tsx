@@ -78,7 +78,7 @@ import { useEffect, useState } from "react";
                                                                                         <div key={billboard._id} className="bg-white rounded-lg shadow-md overflow-hidden">
                                                                                             <div className="relative h-48">
                                                                                                 <img
-                                                                                                    src={billboard.bImg || billboard.imageUrl || "/assets/demo.jpg"}
+                                                                                                    src={billboard.bImg || billboard.imageUrl || "/assets/image2.jpg"}
                                                                                                     alt={billboard.title}
                                                                                                     className="w-full h-full object-cover"
                                                                                                 />

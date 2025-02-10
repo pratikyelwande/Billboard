@@ -1,3 +1,4 @@
+
 import bcrypt from 'bcryptjs';
 import { prisma } from '../db.js';
 import { generateToken } from '../utils/auth.js';
@@ -89,40 +90,6 @@ export const loginController = async (req, res, next) => {
     }
 };
 
-// export const createBillboard = async (req, res) => {
-//     try {
-//         // Destructure billboard details from the request body
-//         const { size, location, billboardType, price, available, amenities, bImg, bReview, bDescription } = req.body;
-//
-//         // Retrieve the authenticated user's id from the token (attached by authMiddleware)
-//         const userId = req.user?.userId;
-//         if (!userId) {
-//             return apiResponse.error(res, 'Owner ID not found', 400);
-//         }
-//
-//         console.log('Owner ID from token:', userId);
-//
-//         // Create a new billboard record using the ownerId from the token
-//         const newBillboard = await prisma.billboard.create({
-//             data: {
-//                 size,
-//                 location,
-//                 billboardType,
-//                 price,
-//                 available,
-//                 amenities,
-//                 bImg,
-//                 bReview,
-//                 bDescription,
-//                 ownerId: userId
-//             }
-//         });
-//
-//         return apiResponse.success(res, newBillboard, 'Billboard created successfully');
-//     } catch (error) {
-//         return apiResponse.error(res, error.message, 500);
-//     }
-// };
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -156,7 +123,8 @@ export const createBillboard = async (req, res) => {
                 bImg: bImgPaths.join(','),
                 bReview,
                 bDescription,
-                ownerId: userId
+                ownerId: userId,
+                isApproved: false // Set isApproved to false by default
             }
         });
 
@@ -165,6 +133,31 @@ export const createBillboard = async (req, res) => {
         return apiResponse.error(res, error.message, 500);
     }
 };
+
+export const approveBillboard = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const billboard = await prisma.billboard.update({
+            where: { id },
+            data: { isApproved: true },
+        });
+        return apiResponse.success(res, billboard, 'Billboard approved successfully');
+    } catch (error) {
+        return apiResponse.error(res, error.message, 500);
+    }
+};
+
+export const getApprovedBillboards = async (req, res) => {
+    try {
+        const billboards = await prisma.billboard.findMany({
+            where: { isApproved: true },
+        });
+        return apiResponse.success(res, billboards, 'Approved billboards retrieved successfully');
+    } catch (error) {
+        return apiResponse.error(res, error.message, 500);
+    }
+};
+
 export const getAllBillboards = async (req, res) => {
     try {
         const billboards = await prisma.billboard.findMany();
@@ -173,3 +166,6 @@ export const getAllBillboards = async (req, res) => {
         return apiResponse.error(res, error.message, 500);
     }
 };
+
+
+

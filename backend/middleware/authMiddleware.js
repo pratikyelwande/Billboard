@@ -18,3 +18,9 @@ export const authMiddleware = (req, res, next) => {
         return apiResponse.unauthorized(res, error.message);
     }
 };
+export const adminMiddleware = (req, res, next) => {
+    if (req.user.role !== 'Admin') { // Match the exact role name (e.g., 'Admin')
+        return apiResponse.unauthorized(res, 'Admin access required');
+    }
+    next();
+};

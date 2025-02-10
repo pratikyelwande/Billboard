@@ -1,17 +1,13 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/authMiddleware.js';
+import {adminMiddleware, authMiddleware} from '../middleware/authMiddleware.js';
 import { apiResponse } from '../utils/apiResponse.js';
 import { validate } from '../middleware/validate.js';
-import { createBillboard, getAllBillboards, upload, approveBillboard, getApprovedBillboards } from '../controllers/authController.js';
+import { createBillboard, upload, approveBillboard,getUnapprovedBillboards , getApprovedBillboards } from '../controllers/authController.js';
 
 const router = express.Router();
 
 router.get('/profile', authMiddleware, (req, res) => {
     apiResponse.success(res, { user: req.user }, 'Profile retrieved successfully');
-});
-
-router.get('/test', authMiddleware, (req, res) => {
-    apiResponse.success(res, { message: "Protected route works!" });
 });
 
 router.get('/admin', authMiddleware, (req, res) => {
@@ -22,7 +18,7 @@ router.get('/admin', authMiddleware, (req, res) => {
 });
 
 router.post('/billboards', authMiddleware, upload.array('bImg', 10), createBillboard);
-router.put('/billboards/:id/approve', authMiddleware, approveBillboard);
+router.put('/billboards/:id/approve', authMiddleware, adminMiddleware,approveBillboard);
 router.get('/billboards', authMiddleware, getApprovedBillboards);
-
+router.get('/admin/billboards', authMiddleware, adminMiddleware, getUnapprovedBillboards);
 export default router;

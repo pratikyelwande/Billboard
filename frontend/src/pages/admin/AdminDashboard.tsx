@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
+import Loader from '../../components/Loader.tsx'; // Import your Loader component
 import './Dashboard.css';
 
 interface Billboard {
@@ -26,7 +27,6 @@ const AdminDashboard: React.FC = () => {
                 if (!authToken) {
                     throw new Error('Authorization token is missing');
                 }
-
                 const apiUrl = `${import.meta.env.VITE_API_URL}/api/protected/admin/billboards`;
 
                 const response = await axios.get(apiUrl, {
@@ -35,14 +35,10 @@ const AdminDashboard: React.FC = () => {
                     },
                 });
 
-                if (response.data && response.data.data) {
-                    setBillboards(response.data.data);
-                } else {
-                    throw new Error('Unexpected response structure');
-                }
+                setBillboards(response.data?.data || []);
             } catch (err) {
                 console.error('Error fetching billboards:', err);
-                setError('Error fetching billboards');
+                setError(err instanceof Error ? err.message : 'Failed to fetch billboards');
             } finally {
                 setLoading(false);
             }
@@ -92,7 +88,7 @@ const AdminDashboard: React.FC = () => {
     };
 
     if (loading) {
-        return <div className="slideshow-container">Loading billboards...</div>;
+        return <Loader />;
     }
 
     if (error) {
@@ -100,50 +96,70 @@ const AdminDashboard: React.FC = () => {
     }
 
     return (
-        <div className="slideshow-container">
-            <div className="navbar">
-                <div>
-                    <a onClick={handleProfile} style={{ cursor: 'pointer' }}>Profile</a>
+        <div className="admin-container">
+            <nav className="admin-navbar">
+                <div className="nav-left">
+                    <h1 className="admin-title">Billboard Admin</h1>
                 </div>
-                <div>
+                <div className="nav-right">
+                    <button className="nav-link" onClick={handleProfile}>Profile</button>
+                    <button className="nav-link" onClick={handleViewProperties}>Properties</button>
                     <button className="logout-button" onClick={handleLogout}>Logout</button>
                 </div>
-            </div>
-            <div className="header-text">
-                Admin Dashboard: Unapproved Billboards
-            </div>
-            <div className="button-container">
-                <button onClick={handleViewProperties}>View Properties</button>
-            </div>
-            <div className="billboard-list">
+            </nav>
+
+            <header className="dashboard-header">
+                <h2>Unapproved Billboards</h2>
+                {billboards.length > 0 && <span className="count-badge">{billboards.length} pending</span>}
+            </header>
+
+            <main className="dashboard-content">
                 {billboards.length > 0 ? (
-                    <ul>
+                    <div className="billboard-grid">
                         {billboards.map((billboard) => (
-                            <li key={billboard.id} className="billboard-card">
-                                {/* Image first */}
-                                <img src={billboard.bImg} alt={billboard.location} className="billboard-image" />
-                                {/* Then location */}
-                                <h2>{billboard.location}</h2>
-                                {/* Then size, price, and description */}
-                                <p>Size: {billboard.size}</p>
-                                <p>Price: ${billboard.price}</p>
-                                <p>Description: {billboard.bDescription}</p>
-                                {/* Approve and Reject buttons */}
-                                <div className="billboard-buttons">
-                                    <button onClick={() => handleApprove(billboard.id)} className="approve-button">
-                                        Approve
-                                    </button>
-                                    <button onClick={() => handleReject(billboard.id)} className="reject-button">
-                                        Reject
-                                    </button>
+                            <article key={billboard.id} className="billboard-card">
+                                <div className="card-image">
+                                    <img
+                                        src={billboard.bImg}
+                                        alt={billboard.location}
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = '/fallback-image.jpg';
+                                        }}
+                                    />
                                 </div>
-                            </li>
+                                <div className="card-content">
+                                    <h3>{billboard.location}</h3>
+                                    <div className="card-meta">
+                                        <span>{billboard.size}</span>
+                                        <span>•</span>
+                                        <span>{billboard.billboardType}</span>
+                                    </div>
+                                    <p className="price">${billboard.price}/month</p>
+                                    <p className="description">{billboard.bDescription}</p>
+                                    <div className="card-actions">
+                                        <button
+                                            className="approve-button"
+                                            onClick={() => handleApprove(billboard.id)}
+                                        >
+                                            Approve
+                                        </button>
+                                        <button
+                                            className="reject-button"
+                                            onClick={() => handleReject(billboard.id)}
+                                        >
+                                            Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            </article>
                         ))}
-                    </ul>
+                    </div>
                 ) : (
-                    <p style={{ color: 'white', textAlign: 'center' }}>No unapproved billboards found</p>
+                    <div className="empty-state">
+                        <p>No unapproved billboards found</p>
+                    </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 };

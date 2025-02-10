@@ -106,11 +106,10 @@ export const createBillboard = async (req, res) => {
     try {
         const { size, location, billboardType, price, available, amenities, bReview, bDescription } = req.body;
         const userId = req.user?.userId;
+
         if (!userId) {
             return apiResponse.error(res, 'Owner ID not found', 400);
         }
-
-        const bImgPaths = req.files.map(file => file.path);
 
         const newBillboard = await prisma.billboard.create({
             data: {
@@ -120,12 +119,11 @@ export const createBillboard = async (req, res) => {
                 price: parseFloat(price),
                 available: available === 'true',
                 amenities,
-                bImg: bImgPaths.join(','),
                 bReview,
                 bDescription,
                 ownerId: userId,
-                isApproved: false // Set isApproved to false by default
-            }
+                isApproved: false, // Default to false
+            },
         });
 
         return apiResponse.success(res, newBillboard, 'Billboard created successfully');
@@ -158,14 +156,13 @@ export const getApprovedBillboards = async (req, res) => {
     }
 };
 
-export const getAllBillboards = async (req, res) => {
+export const getUnapprovedBillboards = async (req, res) => {
     try {
-        const billboards = await prisma.billboard.findMany();
-        return apiResponse.success(res, billboards, 'Billboards retrieved successfully');
+        const billboards = await prisma.billboard.findMany({
+            where: { isApproved: false },
+        });
+        return apiResponse.success(res, billboards, 'Unapproved billboards retrieved successfully');
     } catch (error) {
         return apiResponse.error(res, error.message, 500);
     }
 };
-
-
-

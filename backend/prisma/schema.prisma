@@ -57,6 +57,7 @@ model Billboard {
   bImg          String?   @map("b_img")
   bReview       String?   @map("b_review")
   bDescription  String?   @map("b_description")
+  isApproved    Boolean   @default(false) @map("is_approved") // New field for approval status
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @default(now()) @map("updated_at")
   ownerId       String    @map("owner_id") @db.Uuid
@@ -64,6 +65,7 @@ model Billboard {
   bookings      Booking[]
 
   @@index([price], name: "billboard_price_idx")
+  @@index([isApproved], name: "billboard_approval_idx") // Optional index for filtering
   @@map("billboard")
 }
 

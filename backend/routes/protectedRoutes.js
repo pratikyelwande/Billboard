@@ -2,7 +2,7 @@ import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { apiResponse } from '../utils/apiResponse.js';
 import { validate } from '../middleware/validate.js'; // Optional: if you have validation logic
-import { createBillboard, getAllBillboards } from '../controllers/authController.js';
+import {createBillboard, getAllBillboards, upload} from '../controllers/authController.js';
 
 const router = express.Router();
 
@@ -20,8 +20,8 @@ router.get('/admin', authMiddleware, (req, res) => {
     }
     apiResponse.success(res, { message: 'Admin dashboard' });
 });
+router.post('/billboards', authMiddleware, upload.array('bImg', 10), createBillboard);
 
-router.post('/billboards', authMiddleware, validate(createBillboard));
 router.get('/billboards', authMiddleware, getAllBillboards);
 
 

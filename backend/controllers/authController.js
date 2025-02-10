@@ -4,6 +4,7 @@ import { generateToken } from '../utils/auth.js';
 import { apiResponse } from '../utils/apiResponse.js';
 import {billboardSchema} from "../schemas/authSchema.js";
 import { verifyToken } from '../utils/auth.js';  // Make sure this path is correct
+import multer from 'multer';
 
 export const registerController = async (req, res, next) => {
     try {
@@ -88,29 +89,71 @@ export const loginController = async (req, res, next) => {
     }
 };
 
+// export const createBillboard = async (req, res) => {
+//     try {
+//         // Destructure billboard details from the request body
+//         const { size, location, billboardType, price, available, amenities, bImg, bReview, bDescription } = req.body;
+//
+//         // Retrieve the authenticated user's id from the token (attached by authMiddleware)
+//         const userId = req.user?.userId;
+//         if (!userId) {
+//             return apiResponse.error(res, 'Owner ID not found', 400);
+//         }
+//
+//         console.log('Owner ID from token:', userId);
+//
+//         // Create a new billboard record using the ownerId from the token
+//         const newBillboard = await prisma.billboard.create({
+//             data: {
+//                 size,
+//                 location,
+//                 billboardType,
+//                 price,
+//                 available,
+//                 amenities,
+//                 bImg,
+//                 bReview,
+//                 bDescription,
+//                 ownerId: userId
+//             }
+//         });
+//
+//         return apiResponse.success(res, newBillboard, 'Billboard created successfully');
+//     } catch (error) {
+//         return apiResponse.error(res, error.message, 500);
+//     }
+// };
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'assets/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    }
+});
+
+export const upload = multer({ storage });
+
 export const createBillboard = async (req, res) => {
     try {
-        // Destructure billboard details from the request body
-        const { size, location, billboardType, price, available, amenities, bImg, bReview, bDescription } = req.body;
-
-        // Retrieve the authenticated user's id from the token (attached by authMiddleware)
+        const { size, location, billboardType, price, available, amenities, bReview, bDescription } = req.body;
         const userId = req.user?.userId;
         if (!userId) {
             return apiResponse.error(res, 'Owner ID not found', 400);
         }
 
-        console.log('Owner ID from token:', userId);
+        const bImgPaths = req.files.map(file => file.path);
 
-        // Create a new billboard record using the ownerId from the token
         const newBillboard = await prisma.billboard.create({
             data: {
                 size,
                 location,
                 billboardType,
-                price,
-                available,
+                price: parseFloat(price),
+                available: available === 'true',
                 amenities,
-                bImg,
+                bImg: bImgPaths.join(','),
                 bReview,
                 bDescription,
                 ownerId: userId
@@ -122,7 +165,6 @@ export const createBillboard = async (req, res) => {
         return apiResponse.error(res, error.message, 500);
     }
 };
-
 export const getAllBillboards = async (req, res) => {
     try {
         const billboards = await prisma.billboard.findMany();

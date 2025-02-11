@@ -1,73 +1,83 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-    import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-    interface AuthContextType {
-        isAuthenticated: boolean;
-        isLoading: boolean;
-        login: (userData: { roleName: string; token: string }) => void;
-        logout: () => void;
-        getToken: () => string | null;
+interface AuthContextType {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  userRole: string | null;
+  login: (userData: { roleName: string; token: string }) => void;
+  logout: () => void;
+  getToken: () => string | null;
+}
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('roleName'); // Changed from 'role' to 'roleName'
+    if (token && role) {
+      setIsAuthenticated(true);
+      setUserRole(role);
+      // Route to appropriate dashboard on page refresh
+      if (window.location.pathname === '/login' || window.location.pathname === '/') {
+        navigate(role === 'Admin' ? '/admin-dashboard' : '/dashboard');
+      }
     }
+    setIsLoading(false);
+  }, [navigate]);
 
-    interface AuthProviderProps {
-        children: ReactNode;
-    }
+  const login = (userData: { roleName: string; token: string }) => {
+    console.log('Storing auth data:', userData); // Debug log
+    localStorage.setItem('token', userData.token);
+    localStorage.setItem('roleName', userData.roleName); // Changed from 'role' to 'roleName'
+    setIsAuthenticated(true);
+    setUserRole(userData.roleName);
+    // Navigate based on role
+    navigate(userData.roleName === 'Admin' ? '/admin-dashboard' : '/dashboard');
+  };
 
-    const AuthContext = createContext<AuthContextType | undefined>(undefined);
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('roleName'); // Changed from 'role' to 'roleName'
+    setIsAuthenticated(false);
+    setUserRole(null);
+    navigate('/login');
+  };
 
-    export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-        const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-        const [isLoading, setIsLoading] = useState<boolean>(true);
-        const navigate = useNavigate();
+  const getToken = () => {
+    return localStorage.getItem('token');
+  };
 
-        useEffect(() => {
-            const token = localStorage.getItem('token');
-            const role = localStorage.getItem('role');
-            setIsAuthenticated(!!token);
-            setIsLoading(false);
-        }, []);
+  const value = useMemo(() => ({
+    isAuthenticated,
+    isLoading,
+    userRole,
+    login,
+    logout,
+    getToken
+  }), [isAuthenticated, isLoading, userRole]);
 
-        const login = (userData: { roleName: string; token: string }) => {
-            localStorage.setItem('token', userData.token);
-            localStorage.setItem('role', userData.roleName);
-            setIsAuthenticated(true);
-            if (userData.roleName === 'Admin') {
-                navigate('/admin-dashboard');
-            } else {
-                navigate('/dashboard');
-            }
-        };
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
-        const logout = () => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('role');
-            setIsAuthenticated(false);
-            navigate('/login');
-        };
-
-        const getToken = () => {
-            return localStorage.getItem('token');
-        };
-
-        const value = useMemo(() => ({
-            isAuthenticated,
-            isLoading,
-            login,
-            logout,
-            getToken
-        }), [isAuthenticated, isLoading]);
-
-        return (
-            <AuthContext.Provider value={value}>
-                {children}
-            </AuthContext.Provider>
-        );
-    };
-
-    export const useAuth = () => {
-        const context = useContext(AuthContext);
-        if (!context) {
-            throw new Error('useAuth must be used within an AuthProvider');
-        }
-        return context;
-    };
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

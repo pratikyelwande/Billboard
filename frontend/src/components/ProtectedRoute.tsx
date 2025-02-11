@@ -1,29 +1,28 @@
 import React, { ReactNode } from 'react';
-    import { Navigate } from 'react-router-dom';
-    import { useAuth } from './AuthContext';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
-    interface ProtectedRouteProps {
-        children: ReactNode;
-        requireAdmin?: boolean;
-    }
+interface ProtectedRouteProps {
+  children: ReactNode;
+  requireAdmin?: boolean;
+}
 
-    const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = false }) => {
-        const { isAuthenticated, isLoading } = useAuth();
-        const userRole = localStorage.getItem('role');
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = false }) => {
+  const { isAuthenticated, isLoading, userRole } = useAuth();
 
-        if (isLoading) {
-            return <div>Loading...</div>;
-        }
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-        if (!isAuthenticated) {
-            return <Navigate to="/login" />;
-        }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
-        if (requireAdmin && userRole !== 'Admin') {
-            return <Navigate to="/dashboard" />;
-        }
+  if (requireAdmin && userRole !== 'Admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
 
-        return <>{children}</>;
-    };
+  return <>{children}</>;
+};
 
-    export default ProtectedRoute;
+export default ProtectedRoute;

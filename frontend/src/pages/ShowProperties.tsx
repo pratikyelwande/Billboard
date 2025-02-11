@@ -1,183 +1,290 @@
-import { useEffect, useState } from "react";
-                                                    import B1 from "../components/B1";
-                                                    import Loader from "../components/Loader";
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
+import axios from "axios";
+import B1 from "../components/B1";
+import Loader from "../components/Loader";
 
-                                                    interface Billboard {
-                                                        _id: string;
-                                                        id?: string;
-                                                        imageUrl?: string;
-                                                        bImg?: string[];
-                                                        title: string;
-                                                        location: string;
-                                                        description: string;
-                                                        size: string;
-                                                        totalArea: string;
-                                                        price: number;
-                                                        status: string;
-                                                        type: string;
-                                                        ownerId: string;
-                                                        amenities?: string;
-                                                    }
+interface Billboard {
+    _id: string;
+    id?: string;
+    imageUrl?: string;
+    bImg?: string[];
+    title: string;
+    location: string;
+    description: string;
+    size: string;
+    totalArea: string;
+    price: number;
+    status: string;
+    type: string;
+    ownerId: string;
+    amenities?: string;
+}
 
-                                                    const ShowProperties = () => {
-                                                        const [billboards, setBillboards] = useState<Billboard[]>([]);
-                                                        const [loading, setLoading] = useState<boolean>(true);
-                                                        const [error, setError] = useState<string | null>(null);
+const ShowProperties: React.FC = () => {
+    const [billboards, setBillboards] = useState<Billboard[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
-                                                        useEffect(() => {
-                                                            const fetchBillboards = async () => {
-                                                                try {
-                                                                    const token = localStorage.getItem("authToken");
+    useEffect(() => {
+        const fetchBillboards = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                console.log(token);
+                const response = await axios.get("http://localhost:3000/api/protected/billboards", {
+                    headers: {
+                        "Authorization": `Bearer ${token || ""}`,
+                        "Content-Type": "application/json",
+                    },
+                    withCredentials: true,
+                });
 
-                                                                    const response = await fetch("http://localhost:3000/api/protected/billboards", {
-                                                                        method: "GET",
-                                                                        headers: {
-                                                                            "Authorization": `Bearer ${token || ''}`,
-                                                                            "Content-Type": "application/json",
-                                                                        },
-                                                                        credentials: "include"
-                                                                    });
+                if (response.data.status === "success") {
+                    const mappedData = response.data.data.map((billboard: any) => ({
+                        ...billboard,
+                        _id: billboard.id,
+                        description: billboard.bDescription,
+                        bImg: billboard.bImg ? billboard.bImg.split(",") : [],
+                        type: billboard.billboardType,
+                    }));
+                    setBillboards(mappedData);
+                } else {
+                    throw new Error(response.data.message || "Failed to fetch billboards");
+                }
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to fetch billboards");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-                                                                    if (!response.ok) {
-                                                                        const errorData = await response.json();
-                                                                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-                                                                    }
+        fetchBillboards();
+    }, []);
 
-                                                                    const result = await response.json();
+    if (loading) return <Loader />;
+    if (error) return <ErrorMessage>{error}</ErrorMessage>;
+    if (billboards.length === 0) return <NoBillboards>No billboards available</NoBillboards>;
 
-                                                                    const mappedData = result.data.map((billboard: any) => {
-                                                                        console.log("Billboard Type:", billboard.billboardType); // Log the type
-                                                                        return {
-                                                                            ...billboard,
-                                                                            _id: billboard._id || billboard.id,
-                                                                            description: billboard.bDescription, // Map bDescription to description
-                                                                            bImg: billboard.bImg ? billboard.bImg.split(',') : [], // Split bImg into an array
-                                                                            type: billboard.billboardType, // Map billboardType to type
-                                                                        };
-                                                                    });
+    return (
+        <StyledWrapper>
+            <Title>Available Billboards</Title>
+            <Grid>
+                {billboards.map((billboard) => (
+                    <Card key={billboard._id}>
+                        <ImageContainer>
+                            {billboard.bImg && billboard.bImg.length > 0 && (
+                                <Slideshow images={billboard.bImg} />
+                            )}
+                        </ImageContainer>
+                        <CardContent>
+                            <InfoRow>
+                                <InfoIconWrapper>
+                                    <svg
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        height={24}
+                                        width={24}
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            strokeLinejoin="round"
+                                            strokeLinecap="round"
+                                            strokeWidth="1.5"
+                                            stroke="#141B34"
+                                            d="M7 8.5L9.94202 10.2394C11.6572 11.2535 12.3428 11.2535 14.058 10.2394L17 8.5"
+                                        />
+                                        <path
+                                            strokeLinejoin="round"
+                                            strokeWidth="1.5"
+                                            stroke="#141B34"
+                                            d="M2.01577 13.4756C2.08114 16.5412 2.11383 18.0739 3.24496 19.2094C4.37608 20.3448 5.95033 20.3843 9.09883 20.4634C11.0393 20.5122 12.9607 20.5122 14.9012 20.4634C18.0497 20.3843 19.6239 20.3448 20.7551 19.2094C21.8862 18.0739 21.9189 16.5412 21.9842 13.4756C22.0053 12.4899 22.0053 11.5101 21.9842 10.5244C21.9189 7.45886 21.8862 5.92609 20.7551 4.79066C19.6239 3.65523 18.0497 3.61568 14.9012 3.53657C12.9607 3.48781 11.0393 3.48781 9.09882 3.53656C5.95033 3.61566 4.37608 3.65521 3.24495 4.79065C2.11382 5.92608 2.08114 7.45885 2.01576 10.5244C1.99474 11.5101 1.99475 12.4899 2.01577 13.4756Z"
+                                        />
+                                    </svg>
+                                </InfoIconWrapper>
+                                <InfoText>
+                                    <strong>Location:</strong> {billboard.location}
+                                </InfoText>
+                            </InfoRow>
+                            <InfoRow>
+                                <InfoText>
+                                    <strong>Size:</strong> {billboard.size}
+                                </InfoText>
+                                <InfoText>
+                                    <strong>Price:</strong> {billboard.price}
+                                </InfoText>
+                            </InfoRow>
+                            <InfoRow>
+                                <InfoText>
+                                    <strong>Type:</strong> {billboard.type}
+                                </InfoText>
+                                <InfoText>
+                                    <strong>Amenities:</strong> {billboard.amenities}
+                                </InfoText>
+                            </InfoRow>
+                            <Description>{billboard.description}</Description>
+                            <ButtonWrapper>
+                                <B1 buttonName="Book billboard" />
+                            </ButtonWrapper>
+                        </CardContent>
+                    </Card>
+                ))}
+            </Grid>
+        </StyledWrapper>
+    );
+};
 
-                                                                    setBillboards(mappedData);
-                                                                } catch (err) {
-                                                                    setError(err instanceof Error ? err.message : 'Failed to fetch billboards');
-                                                                } finally {
-                                                                    setLoading(false);
-                                                                }
-                                                            };
+const Slideshow: React.FC<{ images: string[] }> = ({ images }) => {
+    const [currentIndex, setCurrentIndex] = useState(0);
 
-                                                            fetchBillboards();
-                                                        }, []);
+    const nextSlide = () => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+    };
 
-                                                        if (loading) return <Loader />;
-                                                        if (error) return <div className="text-red-500 text-center p-4">{error}</div>;
-                                                        if (billboards.length === 0) return <div className="text-center p-4">No billboards available</div>;
+    const prevSlide = () => {
+        setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
+    };
 
-                                                        return (
-                                                            <div className="container mx-auto p-6 bg-gray-100 min-h-screen">
-                                                                <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Available Billboards</h1>
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                                    {billboards.map((billboard) => {
-                                                                        return (
-                                                                            <div key={billboard._id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-                                                                                <div className="relative h-48">
-                                                                                    {billboard.bImg && billboard.bImg.length > 0 && (
-                                                                                        <Slideshow images={billboard.bImg} />
-                                                                                    )}
-                                                                                </div>
-                                                                                <div className="p-4">
-                                                                                    <p className="text-gray-700 flex items-center mb-2">
-                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-map-pin mr-2">
-                                                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                                                                            <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
-                                                                                            <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
-                                                                                        </svg>
-                                                                                        <strong>Location:</strong> {billboard.location}
-                                                                                    </p>
-                                                                                    <div className="flex justify-between mb-2">
-                                                                                        <p className="text-gray-700 flex items-center">
-                                                                                            <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-ruler-3 mr-2">
-                                                                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                                                                                <path d="M19.875 8c.621 0 1.125 .512 1.125 1.143v5.714c0 .631 -.504 1.143 -1.125 1.143h-15.875a1 1 0 0 1 -1 -1v-5.857c0 -.631 .504 -1.143 1.125 -1.143h15.75z" />
-                                                                                                <path d="M9 8v2" />
-                                                                                                <path d="M6 8v3" />
-                                                                                                <path d="M12 8v3" />
-                                                                                                <path d="M18 8v3" />
-                                                                                                <path d="M15 8v2" />
-                                                                                            </svg>
-                                                                                            <strong>Size:</strong> {billboard.size}
-                                                                                        </p>
-                                                                                        <p className="text-gray-700 flex items-center">
-                                                                                            <strong>Price:</strong> {billboard.price}
-                                                                                            <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-coin-rupee ml-2">
-                                                                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                                                                                <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-                                                                                                <path d="M15 8h-6h1a3 3 0 0 1 0 6h-1l3 3" />
-                                                                                                <path d="M9 11h6" />
-                                                                                            </svg>
-                                                                                        </p>
-                                                                                    </div>
-                                                                                    <div className="flex justify-between mb-2">
-                                                                                        <p className="text-gray-700 flex items-center">
-                                                                                            <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-brand-torchain mr-2">
-                                                                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                                                                                <path d="M15.588 15.537l-3.553 -3.537l-7.742 8.18c-.791 .85 .153 2.18 1.238 1.73l9.616 -4.096a1.398 1.398 0 0 0 .44 -2.277z" />
-                                                                                                <path d="M8.412 8.464l3.553 3.536l7.742 -8.18c.791 -.85 -.153 -2.18 -1.238 -1.73l-9.616 4.098a1.398 1.398 0 0 0 -.44 2.277z" />
-                                                                                            </svg>
-                                                                                            <strong>Type:</strong> {billboard.type}
-                                                                                        </p>
-                                                                                        <p className="text-gray-700 flex items-center">
-                                                                                            <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-arrow-badge-right mr-2">
-                                                                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                                                                                <path d="M13 7h-6l4 5l-4 5h6l4 -5z" />
-                                                                                            </svg>
-                                                                                            <strong>Amenities:</strong> {billboard.amenities}
-                                                                                        </p>
-                                                                                    </div>
-                                                                                    <p className="text-gray-700 mb-4">{billboard.description}</p>
-                                                                                    <div className="flex justify-center">
-                                                                                        <B1 buttonName="Book billboard" />
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    };
+    return (
+        <SlideContainer>
+            <SlideImage
+                src={`http://localhost:3000/${images[currentIndex]}`}
+                alt={`Slide ${currentIndex}`}
+            />
+            <SlideButtonLeft onClick={prevSlide}>&#10094;</SlideButtonLeft>
+            <SlideButtonRight onClick={nextSlide}>&#10095;</SlideButtonRight>
+        </SlideContainer>
+    );
+};
 
-                                                    const Slideshow = ({ images }: { images: string[] }) => {
-                                                        const [currentIndex, setCurrentIndex] = useState(0);
+/* Styled Components */
 
-                                                        const nextSlide = () => {
-                                                            setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
-                                                        };
+const StyledWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+    background-color: #f3f4f6;
+    min-height: 100vh;
+`;
 
-                                                        const prevSlide = () => {
-                                                            setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
-                                                        };
+const Title = styled.h1`
+    font-size: 1.875rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #374151;
+`;
 
-                                                        return (
-                                                            <div className="relative h-full">
-                                                                <img
-                                                                    src={`http://localhost:3000/${images[currentIndex]}`}
-                                                                    alt={`Slide ${currentIndex}`}
-                                                                    className="object-cover w-full h-full transition-opacity duration-500 ease-in-out opacity-100"
-                                                                    key={currentIndex}
-                                                                />
-                                                                <button
-                                                                    onClick={prevSlide}
-                                                                    className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-gray-800 text-white px-2 py-1 rounded-full"
-                                                                >
-                                                                    &#10094;
-                                                                </button>
-                                                                <button
-                                                                    onClick={nextSlide}
-                                                                    className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-gray-800 text-white px-2 py-1 rounded-full"
-                                                                >
-                                                                    &#10095;
-                                                                </button>
-                                                            </div>
-                                                        );
-                                                    };
+const Grid = styled.div`
+    display: grid;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 1200px;
+    grid-template-columns: 1fr;
 
-                                                    export default ShowProperties;
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (min-width: 1024px) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+`;
+
+const Card = styled.div`
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+`;
+
+const ImageContainer = styled.div`
+    position: relative;
+    height: 12rem;
+`;
+
+const CardContent = styled.div`
+    padding: 1rem;
+`;
+
+const InfoRow = styled.div`
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+`;
+
+const InfoIconWrapper = styled.div`
+    margin-right: 0.5rem;
+    svg {
+        width: 20px;
+        height: 20px;
+    }
+`;
+
+const InfoText = styled.p`
+    color: #4b5563;
+    font-size: 0.875rem;
+    margin: 0;
+`;
+
+const Description = styled.p`
+    color: #4b5563;
+    margin-bottom: 1rem;
+`;
+
+const ButtonWrapper = styled.div`
+    display: flex;
+    justify-content: center;
+`;
+
+const SlideContainer = styled.div`
+    position: relative;
+    height: 100%;
+`;
+
+const SlideImage = styled.img`
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.5s ease-in-out;
+    opacity: 1;
+`;
+
+const SlideButtonLeft = styled.button`
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    background-color: #1f2937;
+    color: #ffffff;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+`;
+
+const SlideButtonRight = styled.button`
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    background-color: #1f2937;
+    color: #ffffff;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+`;
+
+const ErrorMessage = styled.div`
+    color: red;
+    text-align: center;
+    padding: 1rem;
+`;
+
+const NoBillboards = styled.div`
+    text-align: center;
+    padding: 1rem;
+`;
+
+export default ShowProperties;

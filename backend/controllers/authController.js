@@ -3,9 +3,13 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../db.js';
 import { generateToken } from '../utils/auth.js';
 import { apiResponse } from '../utils/apiResponse.js';
-import {billboardSchema} from "../schemas/authSchema.js";
-import { verifyToken } from '../utils/auth.js';  // Make sure this path is correct
+import { billboardSchema } from "../schemas/authSchema.js";
+import { verifyToken } from '../utils/auth.js'; // Ensure this path is correct
 import multer from 'multer';
+
+// -------------------
+// User Controllers
+// -------------------
 
 export const registerController = async (req, res, next) => {
     try {
@@ -47,7 +51,6 @@ export const registerController = async (req, res, next) => {
         const { password: _, ...userWithoutPassword } = user;
 
         apiResponse.success(res, { user: userWithoutPassword, token }, 'User registered successfully');
-
     } catch (error) {
         next(error);
     }
@@ -90,6 +93,9 @@ export const loginController = async (req, res, next) => {
     }
 };
 
+// -------------------
+// Multer Setup for File Uploads
+// -------------------
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -101,6 +107,11 @@ const storage = multer.diskStorage({
 });
 
 export const upload = multer({ storage });
+
+// -------------------
+// Billboard Controllers
+// -------------------
+
 export const createBillboard = async (req, res) => {
     try {
         const { size, location, billboardType, price, available, amenities, bReview, bDescription } = req.body;
@@ -125,7 +136,7 @@ export const createBillboard = async (req, res) => {
                 bDescription,
                 ownerId: userId,
                 isApproved: false, // Default to false
-                bImg: bImg.join(','), // Store the image paths as a comma-separated string
+                bImg: bImg.join(',') // Store image paths as a comma-separated string
             },
         });
 
@@ -170,6 +181,25 @@ export const getUnapprovedBillboards = async (req, res) => {
     }
 };
 
+// New: Get My Billboards (only those posted by the logged-in user)
+export const getMyBillboards = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const billboards = await prisma.billboard.findMany({
+            where: { ownerId: userId },
+            // Optionally, you can include bookings here if desired:
+            // include: { bookings: true }
+        });
+        return apiResponse.success(res, billboards, 'Your billboards retrieved successfully');
+    } catch (error) {
+        return apiResponse.error(res, error.message, 500);
+    }
+};
+
+// -------------------
+// Booking Controllers
+// -------------------
+
 export const createBooking = async (req, res) => {
     try {
         const { startDate, endDate, offeredPrice, billboardId } = req.body;
@@ -180,63 +210,11 @@ export const createBooking = async (req, res) => {
             return apiResponse.error(res, 'All fields are required', 400);
         }
 
-        // Check if user exists
-        const userExists = await prisma.user.findUnique({
-            where: { id: userId }
-        });
-        if (!userExists) {
-            return apiResponse.error(res, 'User not found', 404);
-        }
-
-        // Check if billboard exists and is available
-        const billboard = await prisma.billboard.findUnique({
-            where: { id: billboardId }
-        });
-
-        if (!billboard) {
-            return apiResponse.error(res, 'Billboard not found', 404);
-        }
-
-        if (!billboard.available) {
-            return apiResponse.error(res, 'Billboard is not available for booking', 400);
-        }
-
-        // Convert dates to Date objects
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-
-        // Validate date logic
-        if (start >= end) {
-            return apiResponse.error(res, 'End date must be after start date', 400);
-        }
-
-        // Check for existing bookings that conflict with these dates
-        const conflictingBooking = await prisma.booking.findFirst({
-            where: {
-                billboardId,
-                OR: [
-                    {
-                        startDate: { lte: end },
-                        endDate: { gte: start }
-                    },
-                    {
-                        status: 'approved',
-                        startDate: { lte: end },
-                        endDate: { gte: start }
-                    }
-                ]
-            }
-        });
-
-        if (conflictingBooking) {
-            return apiResponse.error(res, 'This billboard is already booked for the selected dates', 409);
-        }
-
         // Create the booking
         const newBooking = await prisma.booking.create({
             data: {
-                startDate: start,
-                endDate: end,
+                startDate: new Date(startDate),
+                endDate: new Date(endDate),
                 offeredPrice: parseFloat(offeredPrice),
                 userId,
                 billboardId,
@@ -245,14 +223,7 @@ export const createBooking = async (req, res) => {
         });
 
         return apiResponse.success(res, newBooking, 'Booking request created successfully');
-
     } catch (error) {
-        if (error instanceof PrismaClientKnownRequestError) {
-            if (error.code === 'P2002') {
-                return apiResponse.error(res, 'Booking conflict detected', 409);
-            }
-            return apiResponse.error(res, `Database error: ${error.message}`, 500);
-        }
         return apiResponse.error(res, 'Internal Server Error', 500);
     }
 };
@@ -260,7 +231,6 @@ export const createBooking = async (req, res) => {
 export const getBookings = async (req, res) => {
     try {
         const userId = req.user.userId;
-
         const bookings = await prisma.booking.findMany({
             where: {
                 billboard: {
@@ -272,7 +242,6 @@ export const getBookings = async (req, res) => {
                 user: true,
             },
         });
-
         return apiResponse.success(res, bookings, 'Bookings retrieved successfully');
     } catch (error) {
         return apiResponse.error(res, error.message, 500);
@@ -317,7 +286,6 @@ export const getAvailableBillboards = async (req, res) => {
         const billboards = await prisma.billboard.findMany({
             where: { available: true },
         });
-
         return apiResponse.success(res, billboards, 'Available billboards retrieved successfully');
     } catch (error) {
         return apiResponse.error(res, error.message, 500);

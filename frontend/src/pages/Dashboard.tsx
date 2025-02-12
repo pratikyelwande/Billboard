@@ -39,6 +39,10 @@ import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
                                 navigate("/showproperties");
                             };
 
+                            const handleClickmyProperties = () => {
+                                navigate("/myproperties");
+                            };
+
                             const handleClickOutside = (event: MouseEvent) => {
                                 if (formRef.current && !formRef.current.contains(event.target as Node)) {
                                     setShowForm(false);
@@ -163,6 +167,9 @@ import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
                                         </button>
                                         <button onClick={handleClick1}>
                                             View Properties
+                                        </button>
+                                        <button onClick={handleClickmyProperties}>
+                                            My Properties
                                         </button>
                                     </div>
 

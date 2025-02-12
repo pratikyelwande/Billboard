@@ -101,7 +101,6 @@ const storage = multer.diskStorage({
 });
 
 export const upload = multer({ storage });
-
 export const createBillboard = async (req, res) => {
     try {
         const { size, location, billboardType, price, available, amenities, bReview, bDescription } = req.body;
@@ -110,6 +109,9 @@ export const createBillboard = async (req, res) => {
         if (!userId) {
             return apiResponse.error(res, 'Owner ID not found', 400);
         }
+
+        // Get the image paths from the uploaded files
+        const bImg = req.files.map(file => file.path);
 
         const newBillboard = await prisma.billboard.create({
             data: {
@@ -123,6 +125,7 @@ export const createBillboard = async (req, res) => {
                 bDescription,
                 ownerId: userId,
                 isApproved: false, // Default to false
+                bImg: bImg.join(','), // Store the image paths as a comma-separated string
             },
         });
 
@@ -131,6 +134,35 @@ export const createBillboard = async (req, res) => {
         return apiResponse.error(res, error.message, 500);
     }
 };
+// export const createBillboard = async (req, res) => {
+//     try {
+//         const { size, location, billboardType, price, available, amenities, bReview, bDescription } = req.body;
+//         const userId = req.user?.userId;
+//
+//         if (!userId) {
+//             return apiResponse.error(res, 'Owner ID not found', 400);
+//         }
+//
+//         const newBillboard = await prisma.billboard.create({
+//             data: {
+//                 size,
+//                 location,
+//                 billboardType,
+//                 price: parseFloat(price),
+//                 available: available === 'true',
+//                 amenities,
+//                 bReview,
+//                 bDescription,
+//                 ownerId: userId,
+//                 isApproved: false, // Default to false
+//             },
+//         });
+//
+//         return apiResponse.success(res, newBillboard, 'Billboard created successfully');
+//     } catch (error) {
+//         return apiResponse.error(res, error.message, 500);
+//     }
+// };
 
 export const approveBillboard = async (req, res) => {
     try {

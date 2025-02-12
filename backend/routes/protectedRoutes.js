@@ -6,9 +6,9 @@ import { createBillboard, upload, approveBillboard,getUnapprovedBillboards , get
 
 const router = express.Router();
 
-router.get('/profile', authMiddleware, (req, res) => {
-    apiResponse.success(res, { user: req.user }, 'Profile retrieved successfully');
-});
+// router.get('/profile', authMiddleware, (req, res) => {
+//     apiResponse.success(res, { user: req.user }, 'Profile retrieved successfully');
+// });
 
 router.get('/admin', authMiddleware, (req, res) => {
     if (req.user.role !== 'Admin') {

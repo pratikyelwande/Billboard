@@ -10,7 +10,6 @@ export const authMiddleware = (req, res, next) => {
     }
 
     try {
-        // Decode token and attach the payload (including userId) to req.user
         const decoded = verifyToken(token);
         req.user = decoded;
         next();

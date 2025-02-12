@@ -75,7 +75,7 @@ model Booking {
   userId       String    @map("user_id") @db.Uuid
   startDate    DateTime  @map("start_date")
   endDate      DateTime  @map("end_date")
-  offeredPrice Float
+  offeredPrice Float     @map("offered_price")
   status       String    @default("pending")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @default(now()) @map("updated_at")

@@ -385,21 +385,8 @@ const InfoText = styled.p`
 `;
 
 const LocationIcon = () => (
-    <svg fill="none" viewBox="0 0 24 24" height={24} width={24}>
-        <path
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            strokeWidth="1.5"
-            stroke="#141B34"
-            d="M7 8.5L9.94202 10.2394C11.6572 11.2535 12.3428 11.2535 14.058 10.2394L17 8.5"
-        />
-        <path
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-            stroke="#141B34"
-            d="M2.01577 13.4756C2.08114 16.5412 2.11383 18.0739 3.24496 19.2094C4.37608 20.3448 5.95033 20.3843 7.72492 19.8391"
-        />
-    </svg>
+    //
+    <></>
 );
 
 const Description = styled.p`
